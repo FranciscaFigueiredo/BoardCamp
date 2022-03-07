@@ -1,3 +1,4 @@
+import BodyError from '../errors/BodyError.js';
 import ConflictError from '../errors/ConflictError.js';
 import * as rentalService from '../services/rentalService.js';
 
@@ -23,49 +24,34 @@ async function getCustomerById(req, res, next) {
     }
 }
 
-async function postCustomer(req, res, next) {
+async function postRental(req, res, next) {
     const {
-        name,
-        phone,
-        cpf,
-        birthday,
+        customerId,
+        gameId,
+        daysRented,
     } = req.body;
 
     try {
         const customer = await rentalService.createNewRental({
-            name,
-            phone,
-            cpf,
-            birthday,
+            customerId,
+            gameId,
+            daysRented,
         });
 
         return res.send(customer);
     } catch (error) {
-        if (error instanceof ConflictError) {
-            return res.status(409).send(error.message);
+        if (error instanceof BodyError) {
+            return res.status(400).send(error.message);
         }
         return next(error);
     }
 }
 
-async function patchCustomer(req, res, next) {
-    const {
-        name,
-        phone,
-        cpf,
-        birthday,
-    } = req.body;
-
+async function returnRental(req, res, next) {
     const { id } = req.params;
 
     try {
-        const customer = await rentalService.updateRental({
-            name,
-            phone,
-            cpf,
-            birthday,
-            id,
-        });
+        const customer = await rentalService.updateRental({ id });
 
         return res.status(200).send(customer);
     } catch (error) {
@@ -79,6 +65,6 @@ async function patchCustomer(req, res, next) {
 export {
     getRentals,
     getCustomerById,
-    postCustomer,
-    patchCustomer,
+    postRental,
+    returnRental,
 };

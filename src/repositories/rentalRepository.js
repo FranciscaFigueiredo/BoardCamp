@@ -64,13 +64,68 @@ async function find() {
 }
 
 async function findById({ id }) {
-    const customer = await connection.query('SELECT * FROM customers WHERE id = $1;', [id]);
+    const rentals = await connection.query({
+        text: `
+            SELECT 
+                rentals.*,
+                customers.id, customers.name,
+                games.id, games.name, games."pricePerDay",
+                categories.*
+            FROM rentals
+            JOIN customers
+                ON customers.id = rentals."customerId"
+            JOIN games
+                ON games.id = rentals."gameId"
+            JOIN categories
+                ON games."categoryId" = categories.id
+            WHERE rentals.id = $1;
+        `,
+        rowMode: 'array',
+    }, [id]);
 
-    if (!customer) {
-        throw new NotFoundError('Usuário não existente');
-    }
+    const rentalResult = rentals.rows.map((row) => {
+        const [
+            idRental,
+            customerId,
+            gameId,
+            rentDate,
+            daysRented,
+            returnDate,
+            originalPrice,
+            delayFee,
+            idCustomer,
+            nameCustomer,
+            idGame,
+            nameGame,
+            pricePerDay,
+            categoryId,
+            categoryName,
+        ] = row;
 
-    return customer.rows[0];
+        return {
+            id: idRental,
+            customerId,
+            gameId,
+            rentDate,
+            daysRented,
+            returnDate,
+            originalPrice,
+            delayFee,
+            customer: {
+                id: idCustomer,
+                name: nameCustomer,
+            },
+            game: {
+                id: idGame,
+                name: nameGame,
+                pricePerDay,
+                categoryId,
+                categoryName,
+            },
+        };
+    });
+
+    return rentalResult[0];
 }
 
 async function findByCpf({ cpf }) {
@@ -84,37 +139,36 @@ async function findByCpf({ cpf }) {
 }
 
 async function create({
-    name,
-    phone,
-    cpf,
-    birthday,
+    customerId,
+    gameId,
+    date,
+    daysRented,
+    originalPrice,
 }) {
-    const customer = await connection.query(`
-        INSERT INTO customers
-            (name, phone, cpf, birthday)
+    const rental = await connection.query(`
+        INSERT INTO rentals
+            ("customerId", "gameId", "rentDate", "daysRented", "originalPrice")
         VALUES 
-            ($1, $2, $3, $4)
+            ($1, $2, $3, $4, $5)
         RETURNING *;
-    `, [name, phone, cpf, birthday]);
+    `, [customerId, gameId, date, daysRented, originalPrice]);
 
-    return customer.rows[0];
+    return rental.rows[0];
 }
 
 async function update({
-    name,
-    phone,
-    cpf,
-    birthday,
-    idUser,
+    id,
+    returnDate,
+    delayFee,
 }) {
-    const customer = await connection.query(`
-        UPDATE customers SET
-            name =$1, phone= $2, cpf = $3, birthday = $4
-        WHERE id = $5
+    const rental = await connection.query(`
+        UPDATE rentals SET
+            "returnDate" = $1, "delayFee" = $2
+        WHERE id = $3
         RETURNING *;
-    `, [name, phone, cpf, birthday, idUser]);
+    `, [returnDate, delayFee, id]);
 
-    return customer.rows[0];
+    return rental.rows[0];
 }
 
 export {

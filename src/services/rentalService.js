@@ -1,10 +1,12 @@
 import dayjs from 'dayjs';
-import ConflictError from '../errors/ConflictError.js';
 import NotFoundError from '../errors/NotFoundError.js';
-import * as customerRepository from '../repositories/rentalRepository.js';
+import * as customerRepository from '../repositories/customerRepository.js';
+import * as rentalRepository from '../repositories/rentalRepository.js';
+import * as gameRepository from '../repositories/gameRepository.js';
+import BodyError from '../errors/BodyError.js';
 
 async function findRentals() {
-    const rentals = await customerRepository.find();
+    const rentals = await rentalRepository.find();
 
     // const customersData = rentals.map((customer) => {
     //     customer.birthday = dayjs(customer.birthday).format('YYYY-MM-DD');
@@ -15,7 +17,7 @@ async function findRentals() {
 }
 
 async function findRentalById({ id }) {
-    const customer = await customerRepository.findById({ id });
+    const customer = await rentalRepository.findById({ id });
 
     customer.birthday = dayjs(customer.birthday).format('YYYY-MM-DD');
 
@@ -23,49 +25,68 @@ async function findRentalById({ id }) {
 }
 
 async function createNewRental({
-    name,
-    phone,
-    cpf,
-    birthday,
+    customerId,
+    gameId,
+    daysRented,
 }) {
-    const searchByCpf = await customerRepository.findByCpf({ cpf });
-
-    if (searchByCpf) {
-        throw new ConflictError('CPF já cadastrado');
-    }
-
-    const customer = await customerRepository.create({
-        name,
-        phone,
-        cpf,
-        birthday,
-    });
-
-    return customer;
-}
-
-async function updateRental({
-    name,
-    phone,
-    cpf,
-    birthday,
-    id,
-}) {
-    const customer = await customerRepository.findById({ id });
+    const customer = await customerRepository.findById({ id: customerId });
+    const game = await gameRepository.findById({ id: gameId });
 
     if (!customer) {
-        throw new NotFoundError('Cliente não cadastrado.');
+        throw new BodyError('Usuário não cadastrado.');
     }
 
-    const updatedCustomer = await customerRepository.update({
-        name,
-        phone,
-        cpf,
-        birthday,
-        idUser: customer.id,
+    if (!game) {
+        throw new BodyError('Jogo não cadastrado.');
+    }
+
+    if (game.stockTotal < 1) {
+        throw new BodyError('Estoque esgotado');
+    }
+
+    const originalPrice = game.pricePerDay * daysRented;
+    const date = dayjs().format('YYYY-MM-DD');
+
+    const rental = await rentalRepository.create({
+        customerId,
+        gameId,
+        date,
+        daysRented,
+        originalPrice,
     });
 
-    return updatedCustomer;
+    return rental;
+}
+
+async function updateRental({ id }) {
+    const rental = await rentalRepository.findById({ id });
+
+    if (!rental) {
+        throw new NotFoundError('Compra não realizada.');
+    }
+
+    if (rental.returnDate) {
+        throw new BodyError('Aluguel já devolvido');
+    }
+
+    const returnDate = new Date();
+    const toReturn = new Date(dayjs(rental.rentDate).add(rental.daysRented, 'day').format('YYYY-MM-DD'));
+
+    let delayFee = 0;
+    let days = Math.abs(returnDate.getTime() - toReturn.getTime());
+    days = Math.floor(delayFee / (1000 * 60 * 60 * 24));
+
+    if (days > 0) {
+        delayFee = ((rental.originalPrice / rental.daysRented) * days);
+    }
+
+    const updatedRental = await rentalRepository.update({
+        id,
+        returnDate,
+        delayFee,
+    });
+
+    return updatedRental;
 }
 
 export {

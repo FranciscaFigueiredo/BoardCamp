@@ -38,8 +38,18 @@ async function findByName({ name }) {
     return games.rows;
 }
 
+async function findById({ id }) {
+    const games = await connection.query(`
+        SELECT * FROM games
+        WHERE id = $1;
+    `, [id]);
+
+    return games.rows[0];
+}
+
 export {
     find,
     create,
     findByName,
+    findById,
 };
