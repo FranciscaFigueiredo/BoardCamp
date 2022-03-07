@@ -1,5 +1,4 @@
 import BodyError from '../errors/BodyError.js';
-import ConflictError from '../errors/ConflictError.js';
 import NotFoundError from '../errors/NotFoundError.js';
 import * as rentalService from '../services/rentalService.js';
 
@@ -60,8 +59,8 @@ async function returnRental(req, res, next) {
             return res.status(400).send(error.message);
         }
 
-        if (error instanceof ConflictError) {
-            return res.status(409).send(error.message);
+        if (error instanceof NotFoundError) {
+            return res.status(404).send(error.message);
         }
 
         return next(error);
