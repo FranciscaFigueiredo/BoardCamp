@@ -1,7 +1,7 @@
 import BodyError from '../errors/BodyError.js';
 import { customerSchema } from '../validations/customerValidation.js';
 
-async function postCustomerValidationMiddleware(req, res, next) {
+async function customerDataValidationMiddleware(req, res, next) {
     const {
         name,
         phone,
@@ -32,5 +32,5 @@ async function postCustomerValidationMiddleware(req, res, next) {
 }
 
 export {
-    postCustomerValidationMiddleware,
+    customerDataValidationMiddleware,
 };

@@ -48,8 +48,37 @@ async function postCustomer(req, res, next) {
     }
 }
 
+async function patchCustomer(req, res, next) {
+    const {
+        name,
+        phone,
+        cpf,
+        birthday,
+    } = req.body;
+
+    const { id } = req.params;
+
+    try {
+        const customer = await customerService.updateCustomer({
+            name,
+            phone,
+            cpf,
+            birthday,
+            id,
+        });
+
+        return res.status(200).send(customer);
+    } catch (error) {
+        if (error instanceof ConflictError) {
+            return res.status(409).send(error.message);
+        }
+        return next(error);
+    }
+}
+
 export {
     getCustomers,
     getCustomerById,
     postCustomer,
+    patchCustomer,
 };

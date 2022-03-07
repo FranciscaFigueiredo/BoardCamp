@@ -44,9 +44,27 @@ async function create({
     return customer.rows[0];
 }
 
+async function update({
+    name,
+    phone,
+    cpf,
+    birthday,
+    idUser,
+}) {
+    const customer = await connection.query(`
+        UPDATE customers SET
+            name =$1, phone= $2, cpf = $3, birthday = $4
+        WHERE id = $5
+        RETURNING *;
+    `, [name, phone, cpf, birthday, idUser]);
+
+    return customer.rows[0];
+}
+
 export {
     find,
     findById,
     create,
     findByCpf,
+    update,
 };

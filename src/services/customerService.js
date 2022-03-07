@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import ConflictError from '../errors/ConflictError.js';
+import NotFoundError from '../errors/NotFoundError.js';
 import * as customerRepository from '../repositories/customerRepository.js';
 
 async function findCustomers() {
@@ -43,8 +44,33 @@ async function createNewCustomer({
     return customer;
 }
 
+async function updateCustomer({
+    name,
+    phone,
+    cpf,
+    birthday,
+    id,
+}) {
+    const customer = await customerRepository.findById({ id });
+
+    if (!customer) {
+        throw new NotFoundError('Cliente não cadastrado.');
+    }
+
+    const updatedCustomer = await customerRepository.update({
+        name,
+        phone,
+        cpf,
+        birthday,
+        idUser: customer.id,
+    });
+
+    return updatedCustomer;
+}
+
 export {
     findCustomers,
     findCustomerById,
     createNewCustomer,
+    updateCustomer,
 };
