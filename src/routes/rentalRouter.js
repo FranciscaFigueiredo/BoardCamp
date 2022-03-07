@@ -7,5 +7,6 @@ const router = new Router();
 router.get('/rentals', rentalController.getRentals);
 router.post('/rentals', rentalDataValidationMiddleware, rentalController.postRental);
 router.post('/rentals/:id/return', rentalController.returnRental);
+router.delete('/rentals/:id', rentalController.deleteRental);
 
 export default router;

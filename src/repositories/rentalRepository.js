@@ -1,5 +1,4 @@
 import { connection } from '../database.js';
-import NotFoundError from '../errors/NotFoundError.js';
 
 async function find() {
     const rentals = await connection.query({
@@ -128,16 +127,6 @@ async function findById({ id }) {
     return rentalResult[0];
 }
 
-async function findByCpf({ cpf }) {
-    const customer = await connection.query('SELECT * FROM customers WHERE cpf = $1;', [cpf]);
-
-    if (!customer) {
-        throw new NotFoundError('Usuário não existente');
-    }
-
-    return customer.rows[0];
-}
-
 async function create({
     customerId,
     gameId,
@@ -174,7 +163,7 @@ async function update({
 async function deleteRentalData({ id }) {
     const rental = await connection.query(`
         DELETE FROM rentals
-        WHERE id = $
+        WHERE id = $1
         RETURNING *;
     `, [id]);
 
@@ -185,7 +174,6 @@ export {
     find,
     findById,
     create,
-    findByCpf,
     update,
     deleteRentalData,
 };
