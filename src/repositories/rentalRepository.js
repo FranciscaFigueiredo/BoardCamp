@@ -171,10 +171,21 @@ async function update({
     return rental.rows[0];
 }
 
+async function deleteRentalData({ id }) {
+    const rental = await connection.query(`
+        DELETE FROM rentals
+        WHERE id = $
+        RETURNING *;
+    `, [id]);
+
+    return rental.rows[0];
+}
+
 export {
     find,
     findById,
     create,
     findByCpf,
     update,
+    deleteRentalData,
 };

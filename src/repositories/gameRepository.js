@@ -51,9 +51,13 @@ async function update({
     id,
     stockTotal,
 }) {
+    console.log({
+        id,
+        stockTotal,
+    });
     const rental = await connection.query(`
         UPDATE games SET
-            "stockTotal" = stockTotal + $1
+            "stockTotal" = "stockTotal" + $1
         WHERE id = $2
         RETURNING *;
     `, [stockTotal, id]);

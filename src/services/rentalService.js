@@ -8,11 +8,6 @@ import BodyError from '../errors/BodyError.js';
 async function findRentals() {
     const rentals = await rentalRepository.find();
 
-    // const customersData = rentals.map((customer) => {
-    //     customer.birthday = dayjs(customer.birthday).format('YYYY-MM-DD');
-    //     return customer;
-    // });
-
     return rentals;
 }
 
@@ -93,9 +88,28 @@ async function updateRental({ id }) {
     return updatedRental;
 }
 
+async function deleteRental({ id }) {
+    const rental = await rentalRepository.findById({ id });
+
+    if (!rental) {
+        throw new NotFoundError('Aluguel não encontrado');
+    }
+
+    if (rental.returnDate) {
+        throw new BodyError('Já houve devolução deste item');
+    }
+
+    await rentalRepository.deleteRentalData({ id });
+
+    await gameRepository.update({ id: rental.gameId, stockTotal: 1 });
+
+    return true;
+}
+
 export {
     findRentals,
     findRentalById,
     createNewRental,
     updateRental,
+    deleteRental,
 };
