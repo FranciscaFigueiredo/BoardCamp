@@ -55,6 +55,8 @@ async function createNewRental({
         originalPrice,
     });
 
+    await gameRepository.update({ id: gameId, stockTotal: -1 });
+
     return rental;
 }
 
@@ -85,6 +87,8 @@ async function updateRental({ id }) {
         returnDate,
         delayFee,
     });
+
+    await gameRepository.update({ id, stockTotal: 1 });
 
     return updatedRental;
 }

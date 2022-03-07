@@ -47,9 +47,24 @@ async function findById({ id }) {
     return games.rows[0];
 }
 
+async function update({
+    id,
+    stockTotal,
+}) {
+    const rental = await connection.query(`
+        UPDATE games SET
+            "stockTotal" = stockTotal + $1
+        WHERE id = $2
+        RETURNING *;
+    `, [stockTotal, id]);
+
+    return rental.rows[0];
+}
+
 export {
     find,
     create,
     findByName,
     findById,
+    update,
 };
